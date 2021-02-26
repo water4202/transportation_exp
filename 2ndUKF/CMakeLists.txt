@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(1stUKF)
+project(2ndUKF)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -11,21 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  nav_msgs
-  diagnostic_msgs
-  diagnostic_updater
-  eigen_conversions
-  geographic_msgs
   geometry_msgs
-  message_filters
-  message_generation
-  roslint
   sensor_msgs
-  std_srvs
-  tf2
-  tf2_geometry_msgs
-  tf2_ros
-  xmlrpcpp
 )
 
 ## System dependencies are found with CMake's conventions
@@ -119,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES UKF
+#  LIBRARIES 2ndUKF
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -135,18 +122,17 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-set(HEADERS_      src/force_est.h src/ukf.h)
-set(SOURCES_      src/force_est.cpp src/ukf.cpp)
+set(HEADERS_  src/forceest.h src/ukf.h)
+set(SOURCES_  src/forceest.cpp src/ukf.cpp)
 
-add_executable(1stUKF src/force_estimate.cpp ${HEADERS_} ${SOURCES_})
+add_executable(2ndUKF src/pose_estimate.cpp ${HEADERS_} ${SOURCES_})
 
-target_link_libraries(1stUKF
-   ${catkin_LIBRARIES}
+target_link_libraries(2ndUKF
+  ${catkin_LIBRARIES}
 )
-
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/UKF.cpp
+#   src/${PROJECT_NAME}/2ndUKF.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -157,7 +143,7 @@ target_link_libraries(1stUKF
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/UKF_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/2ndUKF_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -221,7 +207,7 @@ target_link_libraries(1stUKF
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_UKF.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_2ndUKF.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
