@@ -138,9 +138,9 @@ include_directories(
 set(HEADERS_      src/force_est.h src/ukf.h)
 set(SOURCES_      src/force_est.cpp src/ukf.cpp)
 
-add_executable(firstUKF src/force_estimate.cpp ${HEADERS_} ${SOURCES_})
+add_executable(1stUKF src/force_estimate.cpp ${HEADERS_} ${SOURCES_})
 
-target_link_libraries(firstUKF
+target_link_libraries(1stUKF
    ${catkin_LIBRARIES}
 )
 

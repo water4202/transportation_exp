@@ -1,6 +1,4 @@
-#include <ros/ros.h>
 #include "ros/ros.h"
-#include "std_msgs/String.h"
 #include "sensor_msgs/Imu.h"
 #include "force_est.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -10,15 +8,10 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
 #include "geometry_msgs/TwistStamped.h"
-#include "geometry_msgs/Point.h"
-#include "mavros_msgs/RCOut.h"
-#include "sensor_msgs/MagneticField.h"
-#include "sensor_msgs/BatteryState.h"
 #include <string>
 #include <gazebo_msgs/ModelStates.h>
 #include "geometry_msgs/WrenchStamped.h"
 #include <random>
-#include <nav_msgs/Odometry.h>
 
 #define l 0.25
 #define k 0.02
@@ -27,18 +20,23 @@ int drone_flag;
 forceest forceest1(statesize,measurementsize);
 geometry_msgs::Point euler, euler_ref, force, torque, bias, angular_v, pose;
 sensor_msgs::Imu drone_imu;
-nav_msgs::Odometry odometry;
-geometry_msgs::PoseStamped drone_pose;
+geometry_msgs::PoseStamped optitrack_data, drone_pose, last_pose;
 geometry_msgs::TwistStamped drone_vel;
+double dt = 0.02;
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
   drone_imu = *msg;
 }
 
-void pose_cb(const nav_msgs::Odometry::ConstPtr &msg){
-  odometry = *msg;
-  drone_pose.pose = odometry.pose.pose;
-  drone_vel.twist = odometry.twist.twist;
+void pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg){
+  optitrack_data = *msg;
+
+  drone_pose.pose = optitrack_data.pose;
+
+  drone_vel.twist.linear.x = (drone_pose.pose.position.x - last_pose.pose.position.x)/dt;
+  drone_vel.twist.linear.y = (drone_pose.pose.position.y - last_pose.pose.position.y)/dt;
+  drone_vel.twist.linear.z = (drone_pose.pose.position.z - last_pose.pose.position.z)/dt;
+  last_pose.pose = optitrack_data.pose;
 }
 
 Eigen::Vector3d f1, f2, f3, f4, f5, f6;
@@ -86,7 +84,7 @@ int main(int argc, char **argv){
   }
 
   ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",4,imu_cb);
-  ros::Subscriber pos_sub = nh.subscribe<nav_msgs::Odometry>(topic_mocap,4,pose_cb);
+  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",4,pose_cb);
 
   ros::Subscriber f1_sub = nh.subscribe(model_name+std::string("/rotor_0_ft"),2,f1_cb);
   ros::Subscriber f2_sub = nh.subscribe(model_name+std::string("/rotor_1_ft"),2,f2_cb);

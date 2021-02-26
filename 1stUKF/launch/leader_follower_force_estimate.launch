@@ -1,7 +1,7 @@
 <launch>
 
 <group ns = "leader_ukf">
-   <node pkg="UKF" name="ukf_1" type="firstUKF" output="screen" >
+   <node pkg="UKF" name="ukf_1" type="1stUKF" output="screen" >
      <param name="topic_imu" value="/firefly1/imu" />
      <param name="topic_mocap" value="/firefly1/ground_truth/odometry" />
      <param name="topic_drone" value="1" />
@@ -9,7 +9,7 @@
 </group>
 
 <group ns = "follower_ukf">
-   <node pkg="UKF" name="ukf_2" type="firstUKF" output="screen" >
+   <node pkg="UKF" name="ukf_2" type="1stUKF" output="screen" >
      <param name="topic_imu" value="/firefly2/imu" />
      <param name="topic_mocap" value="/firefly2/ground_truth/odometry" />
      <param name="topic_drone" value="2" />
