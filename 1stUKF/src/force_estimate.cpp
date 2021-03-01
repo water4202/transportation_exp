@@ -28,7 +28,7 @@ void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
   drone_imu = *msg;
 }
 
-void pose_cb(const geometry_msgs::PoseStamped::ConstPtr &msg){
+void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr &msg){
   optitrack_data = *msg;
 
   drone_pose.pose = optitrack_data.pose;
@@ -84,7 +84,7 @@ int main(int argc, char **argv){
   }
 
   ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",4,imu_cb);
-  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",4,pose_cb);
+  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",4,optitrack_cb);
 
   ros::Subscriber f1_sub = nh.subscribe(model_name+std::string("/rotor_0_ft"),2,f1_cb);
   ros::Subscriber f2_sub = nh.subscribe(model_name+std::string("/rotor_1_ft"),2,f2_cb);

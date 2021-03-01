@@ -32,11 +32,11 @@ void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
                           2*x*z-2*w*y,     2*y*z+2*w*x, w*w-x*x-y*y+z*z;
 
   pa = payload_rotation * data - Eigen::Vector3d(0,0,g);
-  omega_p = payload_rotation*wdata;
+  omega_p = payload_rotation * wdata;
 }
 
 Eigen::Vector3d PL;
-void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
+void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
 
   PL << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
 
@@ -66,8 +66,8 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "pose_estimate");
   ros::NodeHandle nh;
 
-  ros::Subscriber imu1_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",2,imu1_cb);
-  ros::Subscriber odometry_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",2,pose_cb);
+  ros::Subscriber imu1_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",2,imu1_cb);  //payload imu
+  ros::Subscriber odometry_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",2,optitrack_cb);
   ros::Subscriber force_sub = nh.subscribe<geometry_msgs::Point>("/leader_ukf/force_estimate",2,force_cb);
 
   ros::Publisher point2_pub = nh.advertise<geometry_msgs::Point>("pointpc2",2);
