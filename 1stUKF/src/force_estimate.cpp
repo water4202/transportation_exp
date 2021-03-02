@@ -22,7 +22,7 @@ geometry_msgs::Point euler, euler_ref, force, torque, bias, angular_v, pose;
 sensor_msgs::Imu drone_imu;
 geometry_msgs::PoseStamped optitrack_data, drone_pose, last_pose;
 geometry_msgs::TwistStamped drone_vel;
-double dt = 0.02;
+float dt = 0.02;
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
   drone_imu = *msg;
@@ -99,7 +99,7 @@ int main(int argc, char **argv){
 
   ros::Rate loop_rate(50);
 
-  double measure_ex, measure_ey, measure_ez;
+  float measure_ex, measure_ey, measure_ez;
 
   Eigen::MatrixXd mnoise;
   mnoise.setZero(measurementsize,measurementsize);
@@ -175,15 +175,15 @@ int main(int argc, char **argv){
 
   while(ros::ok()){
 
-    double F1, F2, F3, F4;
-    double U_x, U_y, U_z;
+    float F1, F2, F3, F4;
+    float U_x, U_y, U_z;
 
-    const double mean = 0.0;
-    const double stddev = 0.1;
+    const float mean = 0.0;
+    const float stddev = 0.1;
     std::default_random_engine generatorx, generatory, generatorz;
-    std::normal_distribution<double> distx(mean,stddev);
-    std::normal_distribution<double> disty(mean,stddev);
-    std::normal_distribution<double> distz(mean,stddev);
+    std::normal_distribution<float> distx(mean,stddev);
+    std::normal_distribution<float> disty(mean,stddev);
+    std::normal_distribution<float> distz(mean,stddev);
     forceest1.gausian_noise << distx(generatorx), disty(generatory), distz(generatorz);
 
     pose.x = drone_pose.pose.position.x;
@@ -204,10 +204,10 @@ int main(int argc, char **argv){
       U_z = k*F1 - k*F2 + k*F3 - k*F4;
 
       forceest1.U << U_x, U_y, U_z;
-      double x = drone_pose.pose.orientation.x;
-      double y = drone_pose.pose.orientation.y;
-      double z = drone_pose.pose.orientation.z;
-      double w = drone_pose.pose.orientation.w;
+      float x = drone_pose.pose.orientation.x;
+      float y = drone_pose.pose.orientation.y;
+      float z = drone_pose.pose.orientation.z;
+      float w = drone_pose.pose.orientation.w;
 
       forceest1.R_IB.setZero();
       forceest1.R_IB << w*w+x*x-y*y-z*z,     2*x*y-2*w*z,     2*x*z+2*w*y,

@@ -24,8 +24,8 @@
 
 #define length 0.18
 #define PI 3.1415926
-double mp = 0.5, g = 9.8, kd = mp*g/(2*length), bd = 2.0, mF = 1.0, Md = 1.5, kf1 = 2.0;
-double dt = 0.02;
+float mp = 0.5, g = 9.8, kd = mp*g/(2*length), bd = 2.0, mF = 1.0, Md = 1.5, kf1 = 2.0;
+float dt = 0.02;
 
 geometry_msgs::PoseStamped desired_pose;
 Eigen::Vector3d pose, vel;
@@ -46,7 +46,7 @@ Eigen::Matrix3d payload_rotation_truth;
 geometry_msgs::Point trigger;
 bool triggered;
 
-double payload_yaw;
+float payload_yaw;
 void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
   gazebo_msgs::LinkStates links = *msg;
   if(links.name.size()>0){
@@ -55,7 +55,7 @@ void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
 
       if (links.name[i].compare("payload::payload_rec_g_box") == 0 ){
         Eigen::Vector3d vec;
-        double w,x,y,z;
+        float w,x,y,z;
 
         x = links.pose[i].orientation.x;
         y = links.pose[i].orientation.y;
@@ -75,7 +75,7 @@ void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
   }
 }
 
-Eigen::VectorXd poly_t(double t){
+Eigen::VectorXd poly_t(float t){
   Eigen::VectorXd data;
   data.resize(6);
   data << 1, t, t*t, t*t*t, t*t*t*t, t*t*t*t*t;
@@ -85,16 +85,16 @@ Eigen::VectorXd poly_t(double t){
 Eigen::Vector3d p_F_c2;
 Eigen::Vector3d FF_I, FF_B, vb;
 int count_ = 0;
-std::queue<double> pos_x_buffer;
-std::queue<double> pos_y_buffer;
+std::queue<float> pos_x_buffer;
+std::queue<float> pos_y_buffer;
 Eigen::VectorXd coeff_x, coeff_y;
 
-double last_time = 0;
-double tmpx = 0, tmpy = 0;
-double last_tmp_x = 0, last_tmp_y = 0;
-double r, Fn, an;
-double command;
-double last_vec_x = 0, last_vec_y = 0, last_vx = 0, last_vy = 0;
+float last_time = 0;
+float tmpx = 0, tmpy = 0;
+float last_tmp_x = 0, last_tmp_y = 0;
+float r, Fn, an;
+float command;
+float last_vec_x = 0, last_vec_y = 0, last_vx = 0, last_vy = 0;
 
 void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
   est_force = *msg;
@@ -132,7 +132,7 @@ void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
          poly_t(0.10).transpose(),
          poly_t(0.12).transpose();
 
-    double t1,t2,t3,t4,t5,t6,t7;
+    float t1,t2,t3,t4,t5,t6,t7;
 
     t1 = pos_x_buffer.front();
     pos_x_buffer.pop();
@@ -170,22 +170,22 @@ void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     ty << t1, t2, t3, t4, t5, t6, t7;
     coeff_y = (w.transpose() * w).inverse() * w.transpose()* ty;
 
-    double t = 0.14;
+    float t = 0.14;
     tmpx = coeff_x(0)*1 + coeff_x(1)*t + coeff_x(2)*t*t + coeff_x(3)*t*t*t + coeff_x(4)*t*t*t*t + coeff_x(5)*t*t*t*t*t;
     tmpy = coeff_y(0)*1 + coeff_y(1)*t + coeff_y(2)*t*t + coeff_y(3)*t*t*t + coeff_y(4)*t*t*t*t + coeff_y(5)*t*t*t*t*t;
     tmpx = 0.7*last_tmp_x + 0.3*tmpx;    // filter
     tmpy = 0.7*last_tmp_y + 0.3*tmpy;
 
-    double dt = ros::Time::now().toSec() - last_time;
+    float dt = ros::Time::now().toSec() - last_time;
     last_time = ros::Time::now().toSec();
 
-    double vec_x = tmpx - last_tmp_x;
-    double vec_y = tmpy - last_tmp_y;
-    double vx = vec_x /dt;
-    double vy = vec_y /dt;
-    double ax = (vx - last_vx)/dt;
-    double ay = (vy - last_vy)/dt;
-    double v = sqrt(vx*vx + vy*vy);
+    float vec_x = tmpx - last_tmp_x;
+    float vec_y = tmpy - last_tmp_y;
+    float vx = vec_x /dt;
+    float vy = vec_y /dt;
+    float ax = (vx - last_vx)/dt;
+    float ay = (vy - last_vy)/dt;
+    float v = sqrt(vx*vx + vy*vy);
 
     Eigen::Vector3d offset_b = payload_Rotation*(FF_I/FF_I.norm()) * length;
 
@@ -193,8 +193,8 @@ void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     an = (v*v)/r;
     Fn = mp/2 * an;
 
-    //double fy = FF_B(1);
-    double dy = -offset_b(1);
+    //float fy = FF_B(1);
+    float dy = -offset_b(1);
 
     if((atan2(vy,vx) - atan2(last_vy,last_vx))<0){
       //determine wheather the motion is CCW or CW, if CW Fn and dy is negative.
@@ -234,7 +234,7 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
   vel(1) = (optitrack_data.pose.position.y - last_pose.pose.position.y)/dt;
   vel(2) = (optitrack_data.pose.position.z - last_pose.pose.position.z)/dt;
 
-  double w,x,y,z;
+  float w,x,y,z;
   x = optitrack_data.pose.orientation.x;
   y = optitrack_data.pose.orientation.y;
   z = optitrack_data.pose.orientation.z;
@@ -287,7 +287,7 @@ int main(int argc, char **argv){
     nh.getParam("/start2",flag);
     nh.getParam("/force_control",force_control);
 
-    double ft = sqrt(FF_I(0)*FF_I(0) + FF_I(1)*FF_I(1));
+    float ft = sqrt(FF_I(0)*FF_I(0) + FF_I(1)*FF_I(1));
     if((ft>0.3)){
       triggered = true;
     }

@@ -8,7 +8,7 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
 
-double l = 0.18, L = 0.5, g = 9.81;
+float l = 0.18, L = 0.5, g = 9.81;
 Eigen::Vector3d pc1, pc2, pa, pb;
 sensor_msgs::Imu imu_data;
 Eigen::Matrix3d payload_rotation;
@@ -21,7 +21,7 @@ void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
   data << imu_data.linear_acceleration.x, imu_data.linear_acceleration.y, imu_data.linear_acceleration.z;
   wdata << imu_data.angular_velocity.x, imu_data.angular_velocity.y, imu_data.angular_velocity.z;
 
-  double w,x,y,z;
+  float w,x,y,z;
   x = imu_data.orientation.x;
   y = imu_data.orientation.y;
   z = imu_data.orientation.z;
@@ -40,7 +40,7 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
 
   PL << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
 
-  double w,x,y,z;
+  float w,x,y,z;
   x = msg->pose.orientation.x;
   y = msg->pose.orientation.y;
   z = msg->pose.orientation.z;

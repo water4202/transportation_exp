@@ -10,34 +10,34 @@ Eigen::MatrixXd forceest::  dynamics(Eigen::MatrixXd sigma_state){
 
   for(int i=0;i<this->x_sigmavector_size;i++){
     //sigma points
-    double px = sigma_state(p_x,i);
-    double py = sigma_state(p_y,i);
-    double pz = sigma_state(p_z,i);
+    float px = sigma_state(p_x,i);
+    float py = sigma_state(p_y,i);
+    float pz = sigma_state(p_z,i);
 
-    double vx = sigma_state(v_x,i);
-    double vy = sigma_state(v_y,i);
-    double vz = sigma_state(v_z,i);
+    float vx = sigma_state(v_x,i);
+    float vy = sigma_state(v_y,i);
+    float vz = sigma_state(v_z,i);
 
-    double ex = sigma_state(e_x,i); // delta_p
-    double ey = sigma_state(e_y,i);
-    double ez = sigma_state(e_z,i);
+    float ex = sigma_state(e_x,i); // delta_p
+    float ey = sigma_state(e_y,i);
+    float ez = sigma_state(e_z,i);
 
-    double omegax = sigma_state(omega_x,i);
-    double omegay = sigma_state(omega_y,i);
-    double omegaz = sigma_state(omega_z,i);
+    float omegax = sigma_state(omega_x,i);
+    float omegay = sigma_state(omega_y,i);
+    float omegaz = sigma_state(omega_z,i);
 
-    double Fx = sigma_state(F_x,i) + gausian_noise(0);
-    double Fy = sigma_state(F_y,i) + gausian_noise(1);
-    double Fz = sigma_state(F_z,i) + gausian_noise(2);
-    double tauz = sigma_state(tau_z,i);
+    float Fx = sigma_state(F_x,i) + gausian_noise(0);
+    float Fy = sigma_state(F_y,i) + gausian_noise(1);
+    float Fz = sigma_state(F_z,i) + gausian_noise(2);
+    float tauz = sigma_state(tau_z,i);
 
-    double betax = sigma_state(beta_x,i);
-    double betay = sigma_state(beta_y,i);
-    double betaz = sigma_state(beta_z,i);
+    float betax = sigma_state(beta_x,i);
+    float betay = sigma_state(beta_y,i);
+    float betaz = sigma_state(beta_z,i);
 
-    double a;
-    double f;
-    double delta_q4;
+    float a;
+    float f;
+    float delta_q4;
     Eigen::Vector3d delta_q3;
     Eigen::Vector3d delta_p;
     Eigen::VectorXd delta_q(4);
@@ -50,8 +50,8 @@ Eigen::MatrixXd forceest::  dynamics(Eigen::MatrixXd sigma_state){
 
     Eigen::MatrixXd phi_q_1(4,4);
     Eigen::Vector3d delta_p_k1;
-    double delta_q_4_k1;
-    double delta_t;
+    float delta_q_4_k1;
+    float delta_t;
 
     Eigen::Vector3d v_k1,v_k;
     Eigen::Vector3d thrust_v;
@@ -61,8 +61,8 @@ Eigen::MatrixXd forceest::  dynamics(Eigen::MatrixXd sigma_state){
     Eigen::Vector3d torque_v;
     Eigen::Vector3d p_v;
     Eigen::Vector3d p_v1;
-    double omega_value;
-    const double m = 1.50;
+    float omega_value;
+    const float m = 1.50;
     v_k << vx, vy, vz;
     thrust_v << 0, 0, thrust;
     gravity << 0, 0, 9.81;
@@ -119,7 +119,7 @@ Eigen::MatrixXd forceest::  dynamics(Eigen::MatrixXd sigma_state){
       qk1 = q_k1_sigma; // 第0個sigma point,會丟進去correct
     }
     //the propagated error quaternions are determined usingm, quater是否恆等於1
-    double quater;
+    float quater;
 
     if(i == 0){
       q_k1_0.setZero();

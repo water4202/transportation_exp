@@ -13,17 +13,17 @@
 Eigen::MatrixXd forceest::dynamics(Eigen::MatrixXd sigma_state){
 Eigen::MatrixXd predict_sigma_state(this->x_size,this->x_sigmavector_size);
   for(int i=0;i<this->x_sigmavector_size;i++){
-    double p_c1_x = sigma_state(pc1_x,i);
-    double p_c1_y = sigma_state(pc1_y,i);
-    double p_c1_z = sigma_state(pc1_z,i);
+    float p_c1_x = sigma_state(pc1_x,i);
+    float p_c1_y = sigma_state(pc1_y,i);
+    float p_c1_z = sigma_state(pc1_z,i);
 
-    double v_c1_x = sigma_state(vc1_x,i);
-    double v_c1_y = sigma_state(vc1_y,i);
-    double v_c1_z = sigma_state(vc1_z,i);
+    float v_c1_x = sigma_state(vc1_x,i);
+    float v_c1_y = sigma_state(vc1_y,i);
+    float v_c1_z = sigma_state(vc1_z,i);
 
-    double a_c1_x = sigma_state(ac1_x,i);
-    double a_c1_y = sigma_state(ac1_y,i);
-    double a_c1_z = sigma_state(ac1_z,i);
+    float a_c1_x = sigma_state(ac1_x,i);
+    float a_c1_y = sigma_state(ac1_y,i);
+    float a_c1_z = sigma_state(ac1_z,i);
 
     dt=0.02;
     //use global frame

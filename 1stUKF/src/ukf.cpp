@@ -104,17 +104,17 @@ void ukf::correct(Eigen::VectorXd measure){
 
   Eigen::Vector4d delta_q_m_k;
   Eigen::Vector3d delta_q_m_k3;
-  double delta_q_m_k4;
+  float delta_q_m_k4;
   Eigen::Matrix4d phi_q_m_k;
   Eigen::Vector4d q_m_k_inv;
   Eigen::Vector3d e_m_k;
-  double quat_m_value;
+  float quat_m_value;
   Eigen::Vector4d delta_q_k;
   Eigen::Vector3d delta_q_kv;
-  double delta_q_ks;
-  double a;
-  double f;
-  double p_value;
+  float delta_q_ks;
+  float a;
+  float f;
+  float p_value;
   Eigen::Vector3d p;
   Eigen::Matrix4d phi_q_k;
   Eigen::Vector4d q_k1;
@@ -194,13 +194,13 @@ Eigen::MatrixXd ukf::dynamics(Eigen::MatrixXd sigma_state){
   return a;
 }
 
-Eigen::MatrixXd ukf::rotate(double roll, double yaw, double pitch){
+Eigen::MatrixXd ukf::rotate(float roll, float yaw, float pitch){
 
   Eigen::MatrixXd frame;
   frame.setZero(3,3);
-  double c_r = cos(roll) , s_r = sin(roll);
-  double c_p = cos(pitch) , s_p = sin(pitch);
-  double c_y = cos(yaw) , s_y = sin(yaw);
+  float c_r = cos(roll) , s_r = sin(roll);
+  float c_p = cos(pitch) , s_p = sin(pitch);
+  float c_y = cos(yaw) , s_y = sin(yaw);
   frame << c_p*c_y ,c_y*s_p*s_r-s_y*c_r , c_y*s_p*c_r+s_y*s_r,
            c_p*s_y ,s_y*s_p+c_r*c_y     , s_y*s_p*c_r-c_y*s_r,
            -1*s_p  ,s_r*c_p             , c_r*c_p            ;

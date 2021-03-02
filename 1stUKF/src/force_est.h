@@ -50,7 +50,7 @@ class forceest : public ukf{
 public:
   forceest(int x, int y) : ukf(x,y){
   }
-  double thrust;
+  float thrust;
   Eigen::Matrix3d R_IB;
   Eigen::Vector3d U;
   Eigen::Vector4d q_m_k;

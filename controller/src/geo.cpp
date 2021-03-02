@@ -17,23 +17,23 @@
 #define normal
 #define PI 3.1415926
 
-double k1 = 1.0, k2 = 2.0, k3 = 1.0, kv = 2.5, kw = 7.0;
-double mp = 0.5, L = 1.0, g = 9.8, Izz = mp*L*L/12;
-double dt = 0.02;
+float k1 = 1.0, k2 = 2.0, k3 = 1.0, kv = 2.5, kw = 7.0;
+float mp = 0.5, L = 1.0, g = 9.8, Izz = mp*L*L/12;
+float dt = 0.02;
 
 geometry_msgs::TwistStamped leader_vel;
 Eigen::Vector3d pose, vel;
 Eigen::Vector3d v_p;
 Eigen::Vector3d FL_des;
 Eigen::Vector3d r_p_c2(-0.5, 0, 0);
-double vir_x, vir_y, theta_r, vx, vy, ax, ay, jx, jy;
-double last_w = 0.0;
+float vir_x, vir_y, theta_r, vx, vy, ax, ay, jx, jy;
+float last_w = 0.0;
 
 double payload_roll, payload_yaw, payload_pitch;
 Eigen::Vector3d v_w_eta;
 Eigen::Vector3d pc2_est;
 
-double x_e, y_e, theta_e;
+float x_e, y_e, theta_e;
 Eigen::Vector3d err_state;
 unsigned int tick=0;
 bool flag = false;
@@ -52,7 +52,7 @@ sensor_msgs::Imu imu_data;
 void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
   imu_data = *msg;
 
-  double w,x,y,z;
+  float w,x,y,z;
   x = imu_data.orientation.x;
   y = imu_data.orientation.y;
   z = imu_data.orientation.z;
@@ -95,7 +95,7 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
   vel(1) = (optitrack_data.pose.position.y - last_pose.pose.position.y)/dt;
   vel(2) = (optitrack_data.pose.position.z - last_pose.pose.position.z)/dt;
 
-  double w,x,y,z;
+  float w,x,y,z;
   x = optitrack_data.pose.orientation.x;
   y = optitrack_data.pose.orientation.y;
   z = optitrack_data.pose.orientation.z;
@@ -108,7 +108,7 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
   last_pose.pose = optitrack_data.pose;
 }
 
-Eigen::Vector3d nonholonomic_output(double x_r, double y_r, double theta_r, double v_r, double w_r){
+Eigen::Vector3d nonholonomic_output(float x_r, float y_r, float theta_r, float v_r, float w_r){
 
   Eigen::Vector3d output;
   Eigen::Vector3d err_state_B;
@@ -119,8 +119,8 @@ Eigen::Vector3d nonholonomic_output(double x_r, double y_r, double theta_r, doub
   y_e = err_state_B(1);
   theta_e = err_state(2);
 
-  double vd = v_r*cos(theta_e) + k1*x_e;
-  double w_d = w_r + v_r*k2*y_e + k3*sin(theta_e);
+  float vd = v_r*cos(theta_e) + k1*x_e;
+  float w_d = w_r + v_r*k2*y_e + k3*sin(theta_e);
 
   output << vd, w_d, 0;
   return output;
@@ -240,17 +240,17 @@ int main(int argc, char **argv){
       alpha << 0, 0, (w_(2) - last_w)/0.02;
       last_w = w_(2);
 
-      double w_r = (ay*vx - ax*vy)/(vx*vx + vy*vy); //(theta_r - last_theta_r) /(0.02) ;
-      double vr = sqrt(vx*vx + vy*vy);
+      float w_r = (ay*vx - ax*vy)/(vx*vx + vy*vy); //(theta_r - last_theta_r) /(0.02) ;
+      float vr = sqrt(vx*vx + vy*vy);
 
       Eigen::Vector3d nonholoutput = nonholonomic_output(vir_x, vir_y, theta_r, vr, w_r);
-      double vr_dot = sqrt(ax*ax + ay*ay);
-      double theta_e_dot = w_r - w_(2);  //the error of the angular velocity
-      double x_e_dot = w_(2) * y_e + vr*cos(theta_e) - v_w_eta(0);
-      double y_e_dot = - w_(2) * x_e + vr*sin(theta_e);
-      double w_r_dot = (jy*vx - jx*vy)/(vr*vr) - (2*vr_dot*w_r)/vr;
-      double w_d_dot = w_r_dot + vr_dot*k2*y_e + vr*k2*y_e_dot + k3*theta_e_dot*cos(theta_e);
-      double vd_dot = vr_dot*cos(theta_e) - vr*theta_e_dot*sin(theta_e) + k1*x_e_dot;
+      float vr_dot = sqrt(ax*ax + ay*ay);
+      float theta_e_dot = w_r - w_(2);  //the error of the angular velocity
+      float x_e_dot = w_(2) * y_e + vr*cos(theta_e) - v_w_eta(0);
+      float y_e_dot = - w_(2) * x_e + vr*sin(theta_e);
+      float w_r_dot = (jy*vx - jx*vy)/(vr*vr) - (2*vr_dot*w_r)/vr;
+      float w_d_dot = w_r_dot + vr_dot*k2*y_e + vr*k2*y_e_dot + k3*theta_e_dot*cos(theta_e);
+      float vd_dot = vr_dot*cos(theta_e) - vr*theta_e_dot*sin(theta_e) + k1*x_e_dot;
 
       Eigen::Vector3d nonlinearterm;
 
