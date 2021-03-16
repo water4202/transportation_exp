@@ -16,7 +16,6 @@
 #define l 0.25
 #define k 0.02
 std::string model_name;
-int drone_flag;
 forceest forceest1(statesize,measurementsize);
 geometry_msgs::Point euler, euler_ref, force, torque, bias, angular_v, pose;
 sensor_msgs::Imu drone_imu;
@@ -26,6 +25,11 @@ float dt = 0.02;
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr &msg){
   drone_imu = *msg;
+}
+
+Eigen::Vector3d thrust;
+void thrust_cb(const geometry_msgs::WrenchStamped::ConstPtr &msg){
+  thrust << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
 }
 
 void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr &msg){
@@ -39,62 +43,14 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr &msg){
   last_pose.pose = optitrack_data.pose;
 }
 
-Eigen::Vector3d f1, f2, f3, f4, f5, f6;
-void f1_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  f1 << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
-}
-
-void f2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  f2 << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
-}
-
-void f3_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  f3 << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
-}
-
-void f4_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  f4 << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
-}
-
-void f5_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  f5 << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
-}
-
-void f6_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  f6 << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z;
-}
-
 int main(int argc, char **argv){
   ros::init(argc, argv, "force_estimate");
   ros::NodeHandle nh;
 
-  std::string topic_imu, topic_mocap;
-  ros::param::get("~topic_imu", topic_imu);
-  ros::param::get("~topic_mocap", topic_mocap);
-  ros::param::get("~topic_drone", drone_flag);
-
-  if(drone_flag == 2){
-    model_name = "/firefly2/firefly2";
-    std::cout << "drone 2" << std::endl;
-  }
-
-  if(drone_flag == 1){
-    model_name = "/firefly1/firefly1";
-    std::cout << "drone 1" << std::endl;
-  }
-
-  ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",4,imu_cb);
+  ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/imu/data_raw",4,imu_cb);
   ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",4,optitrack_cb);
+  ros::Subscriber thrust_sub = nh.subscribe<geometry_msgs::WrenchStamped>("/rotor_all_ft",4,thrust_cb);
 
-  ros::Subscriber f1_sub = nh.subscribe(model_name+std::string("/rotor_0_ft"),2,f1_cb);
-  ros::Subscriber f2_sub = nh.subscribe(model_name+std::string("/rotor_1_ft"),2,f2_cb);
-  ros::Subscriber f3_sub = nh.subscribe(model_name+std::string("/rotor_2_ft"),2,f3_cb);
-  ros::Subscriber f4_sub = nh.subscribe(model_name+std::string("/rotor_3_ft"),2,f4_cb);
-  ros::Subscriber f5_sub = nh.subscribe(model_name+std::string("/rotor_4_ft"),2,f5_cb);
-  ros::Subscriber f6_sub = nh.subscribe(model_name+std::string("/rotor_5_ft"),2,f6_cb);
-
-  ros::Publisher euler_pub = nh.advertise<geometry_msgs::Point>("euler",2);
-  ros::Publisher euler_ref_pub = nh.advertise<geometry_msgs::Point>("euler_ref",2);
   ros::Publisher force_pub = nh.advertise<geometry_msgs::Point>("force_estimate",2);
 
   ros::Rate loop_rate(50);
@@ -188,20 +144,18 @@ int main(int argc, char **argv){
 
     pose.x = drone_pose.pose.position.x;
 
-    if(drone_imu.angular_velocity.x != 0 && drone_pose.pose.position.x != 0 && drone_vel.twist.linear.x != 0){
-      if((drone_flag == 2)||(drone_flag == 1)){
+    if(drone_imu.angular_velocity.x != 0 && drone_pose.pose.position.x != 0 && drone_vel.twist.linear.x != 0){   
 
-        F1 = f3(2);//(6.13176e-06*(pwm3*pwm3) -0.0181164*pwm3 + 15.9815); //drone
-        F2 = f1(2);//(6.13176e-06*(pwm1*pwm1) -0.0181164*pwm1 + 15.9815); //left_right:265.7775
-        F3 = f4(2);//(6.13176e-06*(pwm4*pwm4) -0.0181164*pwm4 + 15.9815); //up_down:265.7775
-        F4 = f2(2);//(6.13176e-06*(pwm2*pwm2) -0.0181164*pwm2 + 15.9815);
-      }
+      //F1 = f3(2);//(6.13176e-06*(pwm3*pwm3) -0.0181164*pwm3 + 15.9815); //drone
+      //F2 = f1(2);//(6.13176e-06*(pwm1*pwm1) -0.0181164*pwm1 + 15.9815); //left_right:265.7775
+      //F3 = f4(2);//(6.13176e-06*(pwm4*pwm4) -0.0181164*pwm4 + 15.9815); //up_down:265.7775
+      //F4 = f2(2);//(6.13176e-06*(pwm2*pwm2) -0.0181164*pwm2 + 15.9815);
 
-      forceest1.thrust = f1(2) + f2(2) + f3(2) + f4(2) + f5(2) + f6(2);
+      forceest1.thrust = thrust(2);
 
-      U_x = (sqrt(2)/2)*l*(F1 - F2 - F3 + F4);
-      U_y = (sqrt(2)/2)*l*(-F1 - F2 + F3 + F4);
-      U_z = k*F1 - k*F2 + k*F3 - k*F4;
+      U_x = 0;//(sqrt(2)/2)*l*(F1 - F2 - F3 + F4);
+      U_y = 0;//(sqrt(2)/2)*l*(-F1 - F2 + F3 + F4);
+      U_z = 0;//k*F1 - k*F2 + k*F3 - k*F4;
 
       forceest1.U << U_x, U_y, U_z;
       float x = drone_pose.pose.orientation.x;
@@ -253,9 +207,6 @@ int main(int argc, char **argv){
       euler_ref.x = roll_ref*180/3.1415926;        //roll_ref*180/3.1415926
       euler_ref.y = pitch_ref*180/3.1415926;       //pitch_ref*180/3.1415926
       euler_ref.z = yaw_ref*180/3.1415926;         //yaw_ref*180/3.1415926
-
-      euler_pub.publish(euler);
-      euler_ref_pub.publish(euler_ref);
 
       force.x = forceest1.x[F_x];
       force.y = forceest1.x[F_y];

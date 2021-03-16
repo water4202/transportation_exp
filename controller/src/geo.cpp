@@ -43,10 +43,6 @@ Eigen::Matrix3d uav_rotation;
 Eigen::Vector3d w_;
 
 geometry_msgs::PoseStamped desired_pose;
-geometry_msgs::Point record_pose;
-geometry_msgs::Point desired_force;
-geometry_msgs::Point desired_velocity;
-geometry_msgs::Point feedforward;
 
 sensor_msgs::Imu imu_data;
 void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
@@ -131,11 +127,8 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "geo");
   ros::NodeHandle nh;
 
-  ros::Publisher feedforward_pub = nh.advertise<geometry_msgs::Point>("/feedforward",2);
-  ros::Publisher desired_pose_pub = nh.advertise<geometry_msgs::Point>("/drone1/desired_position",2);
-  ros::Publisher desired_force_pub = nh.advertise<geometry_msgs::Point>("/desired_force",2);
-  ros::Publisher desired_velocity_pub = nh.advertise<geometry_msgs::Point>("/desired_velocity",2);
   ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseStamped>("/firefly1/command/pose",2);
+
   ros::Subscriber odom_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",3,optitrack_cb);
   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
   ros::Subscriber imu1_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",2,imu1_cb); //payload imu
@@ -221,8 +214,6 @@ int main(int argc, char **argv){
     else{
       vir_x = data[tick].pos(0);
       vir_y = data[tick].pos(1);
-      record_pose.x = vir_x;
-      record_pose.y = vir_y;
       vx = data[tick].vel(0);
       vy = data[tick].vel(1);
       ax = data[tick].acc(0);
@@ -280,27 +271,12 @@ int main(int argc, char **argv){
       FL_des(1) = cmd_(1);   // + w_d_dot;
       FL_des(2) = 1.0*(desired_pose.pose.position.z - pose(2)) + 0.6*(0 - vel(2)) + mp*g/2.0;
 
-      desired_force.x = FL_des(0);
-      desired_force.y = FL_des(1);
-      desired_force.z = FL_des(2);
-
-      desired_velocity.x = vr;
-      desired_velocity.y = w_r;
-
-      feedforward.x = nonlinearterm(0);
-      feedforward.y = vd_dot;
-      feedforward.z = w_d_dot;
-
       force.pose.position.x = FL_des(0);
       force.pose.position.y = FL_des(1);
       force.pose.position.z = FL_des(2);
      }
 
      traj_pub.publish(force);
-     desired_pose_pub.publish(record_pose);
-     desired_force_pub.publish(desired_force);
-     desired_velocity_pub.publish(desired_velocity);
-     feedforward_pub.publish(feedforward);
 
      ros::spinOnce();
      loop_rate.sleep();

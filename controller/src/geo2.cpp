@@ -29,7 +29,6 @@ float dt = 0.02;
 
 geometry_msgs::PoseStamped desired_pose;
 Eigen::Vector3d pose, vel;
-geometry_msgs::Point kappa;
 
 bool flag = false;
 bool force_control = false;
@@ -40,40 +39,10 @@ Eigen::Matrix3d uav_rotation;
 
 geometry_msgs::PoseStamped force;
 geometry_msgs::Point est_force;
-geometry_msgs::Point data;
 
 Eigen::Matrix3d payload_rotation_truth;
-geometry_msgs::Point trigger;
 bool triggered;
-
 float payload_yaw;
-void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
-  gazebo_msgs::LinkStates links = *msg;
-  if(links.name.size()>0){
-
-    for(unsigned int i=0; i<links.name.size(); i++){
-
-      if (links.name[i].compare("payload::payload_rec_g_box") == 0 ){
-        Eigen::Vector3d vec;
-        float w,x,y,z;
-
-        x = links.pose[i].orientation.x;
-        y = links.pose[i].orientation.y;
-        z = links.pose[i].orientation.z;
-        w = links.pose[i].orientation.w;
-        tf::Quaternion q(x,y,z,w);
-        double roll, pitch, yaw;
-        tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-
-        //body to inertial frame
-        payload_rotation_truth << cos(yaw), -sin(yaw),   0,
-                                  sin(yaw),  cos(yaw),   0,
-                                         0,         0,   1;
-        data.z = payload_yaw - yaw;
-      }
-    }
-  }
-}
 
 Eigen::VectorXd poly_t(float t){
   Eigen::VectorXd data;
@@ -203,13 +172,6 @@ void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
 
     command = mF*(bd*-vb(1) - kd*dy)/Md + Fn;
 
-    kappa.x = r;
-    kappa.y = Fn;
-    kappa.z = dy;
-
-    data.x = tmpx;
-    data.y = tmpy;
-
     last_tmp_x = tmpx;
     last_tmp_y = tmpy;
     last_vec_x = vec_x;
@@ -247,31 +209,14 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
   last_pose.pose = optitrack_data.pose;
 }
 
-geometry_msgs::Point force2;
-Eigen::Vector3d a_, b_;
-void force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
-  b_ << msg -> wrench.force.x, msg -> wrench.force.y, msg -> wrench.force.z;
-  a_ = payload_rotation_truth * b_;
-
-  force2.x = a_(0);
-  force2.y = a_(1);
-  force2.z = a_(2);
-}
-
 int main(int argc, char **argv){
   ros::init(argc, argv, "geo2");
   ros::NodeHandle nh;
 
   ros::Subscriber odom_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",3, optitrack_cb);
   ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>("/follower_ukf/force_estimate",3, est_force_cb);
-  ros::Subscriber force2_sub= nh.subscribe<geometry_msgs::WrenchStamped>("/ft_sensor2_topic",2, force2_cb);
-  ros::Subscriber model_sub = nh.subscribe<gazebo_msgs::LinkStates>("/gazebo/link_states",1, model_cb);
 
   ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseStamped>("/firefly2/command/pose",2);
-  ros::Publisher vc2_pub = nh.advertise<geometry_msgs::Point>("vc2_error",1);
-  ros::Publisher trigger_pub = nh.advertise<geometry_msgs::Point>("/follower_trigger",2);
-  ros::Publisher radius_pub = nh.advertise<geometry_msgs::Point>("/kappa",2);
-  ros::Publisher force2_pub = nh.advertise<geometry_msgs::Point>("/force2",2);
 
   nh.setParam("/start2",false);
   nh.setParam("/force_control",false);
@@ -314,24 +259,14 @@ int main(int argc, char **argv){
       force.pose.position.x = a(0);
       force.pose.position.y = a(1);
       force.pose.position.z = a(2);
-
-      trigger.x = 1;
     }
     else{
       force.pose.position.x = 3*(desired_pose.pose.position.x - pose(0)) + 1*(0 - vel(0));
       force.pose.position.y = 3*(desired_pose.pose.position.y - pose(1)) + 1*(0 - vel(1));
       force.pose.position.z = 3*(desired_pose.pose.position.z - pose(2)) + 1*(0 - vel(2)) + 0.5*mp*g;
-
-      trigger.x = 0;
     }
 
-    trigger.y = ft;
-
     traj_pub.publish(force);
-    trigger_pub.publish(trigger);
-    force2_pub.publish(force2);
-    radius_pub.publish(kappa);
-    vc2_pub.publish(data);
 
     ros::spinOnce();
     loop_rate.sleep();
