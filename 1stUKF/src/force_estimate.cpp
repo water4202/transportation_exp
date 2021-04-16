@@ -216,6 +216,8 @@ int main(int argc, char **argv){
       force_pub.publish(force);
     }
 
+    printf("UKF estimated force  x: %f  y: %f  z: %f\n", force.x, force.y, force.z);
+
     loop_rate.sleep();
     ros::spinOnce();
   }
