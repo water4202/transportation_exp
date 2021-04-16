@@ -214,9 +214,9 @@ int main(int argc, char **argv){
       torque.z = forceest1.x[tau_z];
 
       force_pub.publish(force);
+      printf("UKF estimated force  x: %f  y: %f  z: %f\n", force.x, force.y, force.z);
     }
 
-    printf("UKF estimated force  x: %f  y: %f  z: %f\n", force.x, force.y, force.z);
 
     loop_rate.sleep();
     ros::spinOnce();
