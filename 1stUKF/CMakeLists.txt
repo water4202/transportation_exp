@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(1stUKF)
+project(first_ukf)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -138,9 +138,9 @@ include_directories(
 set(HEADERS_      src/force_est.h src/ukf.h)
 set(SOURCES_      src/force_est.cpp src/ukf.cpp)
 
-add_executable(1stUKF src/force_estimate.cpp ${HEADERS_} ${SOURCES_})
+add_executable(first_ukf src/force_estimate.cpp ${HEADERS_} ${SOURCES_})
 
-target_link_libraries(1stUKF
+target_link_libraries(first_ukf
    ${catkin_LIBRARIES}
 )
 
