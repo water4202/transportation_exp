@@ -208,8 +208,8 @@ int main(int argc, char **argv){
       euler_ref.y = pitch_ref*180/3.1415926;       //pitch_ref*180/3.1415926
       euler_ref.z = yaw_ref*180/3.1415926;         //yaw_ref*180/3.1415926
 
-      force.x = forceest1.x[F_x];
-      force.y = forceest1.x[F_y];
+      force.x = forceest1.x[F_x] + 0.3; // bias
+      force.y = forceest1.x[F_y] + 0.3;
       force.z = forceest1.x[F_z];
       torque.z = forceest1.x[tau_z];
 
