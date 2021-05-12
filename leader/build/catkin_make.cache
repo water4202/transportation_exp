@@ -1,0 +1,2 @@
+
+-DCATKIN_DEVEL_PREFIX=/home/liu/ROS/catkin_ws/src/transportation_exp/qp_trajectory/devel -DCMAKE_INSTALL_PREFIX=/home/liu/ROS/catkin_ws/src/transportation_exp/qp_trajectory/install -G Unix Makefiles
