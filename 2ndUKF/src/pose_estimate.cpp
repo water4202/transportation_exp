@@ -67,7 +67,7 @@ int main(int argc, char **argv){
   ros::NodeHandle nh;
 
   ros::Subscriber imu1_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",2,imu1_cb);  //payload imu
-  ros::Subscriber odometry_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",2,optitrack_cb);
+  ros::Subscriber odometry_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV1/pose",2,optitrack_cb);
   ros::Subscriber force_sub = nh.subscribe<geometry_msgs::Point>("/leader_ukf/force_estimate",2,force_cb);
 
   ros::Publisher point2_pub = nh.advertise<geometry_msgs::Point>("pointpc2",2);

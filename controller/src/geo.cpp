@@ -234,7 +234,7 @@ int main(int argc, char **argv){
       float w_r = (ay*vx - ax*vy)/(vx*vx + vy*vy); //(theta_r - last_theta_r) /(0.02) ;
       float vr = sqrt(vx*vx + vy*vy);
 
-      Eigen::Vector3d nonholoutput = nonholonomic_output(vir_x, vir_y, theta_r, vr, w_r);
+      Eigen::Vector3d nonholoutput = nonholonomic_output(vir_x, vir_y, theta_r, vr, w_r); //vd, wd
       float vr_dot = sqrt(ax*ax + ay*ay);
       float theta_e_dot = w_r - w_(2);  //the error of the angular velocity
       float x_e_dot = w_(2) * y_e + vr*cos(theta_e) - v_w_eta(0);

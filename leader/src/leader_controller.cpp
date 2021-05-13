@@ -47,7 +47,7 @@ geometry_msgs::Point desired_velocity;
 geometry_msgs::Point feedforward;
 
 sensor_msgs::Imu imu_data;
-void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
+void payload_imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   imu_data = *msg;
 
   double w,x,y,z;
@@ -112,7 +112,7 @@ int main(int argc, char **argv){
   ros::Publisher desired_velocity_pub = nh.advertise<geometry_msgs::Point>("/desired_velocity",2);
   ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseStamped>("/firefly1/command/pose",2);
 
-  ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,imu1_cb);
+  ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,payload_imu_callback);
   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
   ros::Subscriber pc2_sub = nh.subscribe("pointpc2",2,pc2_cb);
   ros::Subscriber eta_sub = nh.subscribe("pointvc2",2,eta_cb);
@@ -201,7 +201,7 @@ int main(int argc, char **argv){
 
     Eigen::Vector3d alpha;
     alpha << 0, 0, (w_(2) - last_w)/0.02;
-    last_w = w_(2);
+    last_w = w_(2); //payload imu
 
     double w_r = (ay*vx - ax*vy)/(vx*vx + vy*vy); //(theta_r - last_theta_r) /(0.02) ;
     double vr = sqrt(vx*vx + vy*vy);
@@ -210,6 +210,7 @@ int main(int argc, char **argv){
     double vr_dot = sqrt(ax*ax + ay*ay);
     double theta_e_dot = w_r - w_(2);  //the error of the angular velocity
     double x_e_dot = w_(2) * y_e + vr*cos(theta_e) - v_w_eta(0);  //(58)
+                                                    //UKF 2nd
     double y_e_dot = - w_(2) * x_e + vr*sin(theta_e);  //(58)
     double w_r_dot = (jy*vx - jx*vy)/(vr*vr) - (2*vr_dot*w_r)/vr;     //vr^(-3) ??
     double w_d_dot = w_r_dot + vr_dot*k2*y_e + vr*k2*y_e_dot + k3*theta_e_dot*cos(theta_e);   //take (43) time derivative
@@ -242,11 +243,9 @@ int main(int argc, char **argv){
 
     FL_des(0) = cmd_(0);   // + nonlinearterm(0);// + vd_dot ;
     FL_des(1) = cmd_(1);   // + w_d_dot;
-    FL_des(2) = 1.0*(desired_pose.pose.position.z - pose(2)) + 0.6*(0 - vel(2)) + mp*g/2.0;
 
     desired_force.x = FL_des(0);
     desired_force.y = FL_des(1);
-    desired_force.z = FL_des(2);
 
     desired_velocity.x = vr;
     desired_velocity.y = w_r; //put w into y
@@ -261,7 +260,6 @@ int main(int argc, char **argv){
        - vehicle_parameters_.gravity_ * e_3 + Eigen::Vector3d(0,0,0) ;
     */
     force.pose.position.y = FL_des(1);
-    force.pose.position.z = FL_des(2);
 
      traj_pub.publish(force);
      std::cout << force.pose.position.x << std::endl;
