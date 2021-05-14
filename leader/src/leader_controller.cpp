@@ -20,9 +20,8 @@
 double k1 = 1.0, k2 = 2.0, k3 = 1.0, kv = 2.5, kw = 7.0;
 double mp = 0.5, L = 1.0, g = 9.8, Izz = mp*L*L/12;
 
-Eigen::Vector3d pose, vel, ang;
+Eigen::Vector3d pose, vel;
 Eigen::Vector3d v_p;
-Eigen::Vector3d FL_des;
 Eigen::Vector3d r_p_c2(-0.5, 0, 0);
 double vir_x, vir_y, theta_r, vx, vy, ax, ay, jx, jy;
 double last_w = 0.0;
@@ -33,19 +32,14 @@ Eigen::Vector3d pc2_est;
 
 double x_e, y_e, theta_e;
 Eigen::Vector3d err_state;
-unsigned int tick=0;
+unsigned int tick = 0;
 bool flag = false;
 
 Eigen::Matrix3d R_pl_B;
-Eigen::Matrix3d uav_rotation;
 Eigen::Vector3d w_;
 
 geometry_msgs::PoseStamped desired_pose;
-geometry_msgs::Point record_pose;
-geometry_msgs::Point desired_force;
-geometry_msgs::Point desired_velocity;
-geometry_msgs::Point feedforward;
-
+geometry_msgs::Point controller_force;
 sensor_msgs::Imu imu_data;
 void payload_imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   imu_data = *msg;
@@ -106,16 +100,12 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "leader_controller");
   ros::NodeHandle nh;
 
-  ros::Publisher feedforward_pub = nh.advertise<geometry_msgs::Point>("/feedforward",2);
-  ros::Publisher desired_pose_pub = nh.advertise<geometry_msgs::Point>("/drone1/desired_position",2);
-  ros::Publisher desired_force_pub = nh.advertise<geometry_msgs::Point>("/desired_force",2);
-  ros::Publisher desired_velocity_pub = nh.advertise<geometry_msgs::Point>("/desired_velocity",2);
-  ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseStamped>("/firefly1/command/pose",2);
-
   ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,payload_imu_callback);
   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
   ros::Subscriber pc2_sub = nh.subscribe("pointpc2",2,pc2_cb);
   ros::Subscriber eta_sub = nh.subscribe("pointvc2",2,eta_cb);
+
+  ros::Publisher controller_force_pub = nh.advertise<geometry_msgs::Point>("/controller_force",2);
 
   ros::Rate loop_rate(50.0);
   nh.setParam("/start",false);
@@ -184,8 +174,6 @@ int main(int argc, char **argv){
 
     vir_x = data[tick].pos(0);
     vir_y = data[tick].pos(1);
-    record_pose.x = vir_x;
-    record_pose.y = vir_y;
     vx = data[tick].vel(0);
     vy = data[tick].vel(1);
     ax = data[tick].acc(0);
@@ -241,34 +229,12 @@ int main(int argc, char **argv){
 
     tick++;
 
-    FL_des(0) = cmd_(0);   // + nonlinearterm(0);// + vd_dot ;
-    FL_des(1) = cmd_(1);   // + w_d_dot;
+    controller_force.x = cmd_(0);   // + nonlinearterm(0);// + vd_dot ;
+    controller_force.y = cmd_(1);   // + w_d_dot;
 
-    desired_force.x = FL_des(0);
-    desired_force.y = FL_des(1);
+    controller_force_pub.publish(controller_force);
 
-    desired_velocity.x = vr;
-    desired_velocity.y = w_r; //put w into y
-
-    feedforward.x = nonlinearterm(0);
-    feedforward.y = vd_dot;
-    feedforward.z = w_d_dot;
-
-    force.pose.position.x = FL_des(0);
-    /* use "position" element to store force message -> lee_position_controller.cpp line 133
-       *acceleration =  -command_trajectory_.position_W/ vehicle_parameters_.mass_
-       - vehicle_parameters_.gravity_ * e_3 + Eigen::Vector3d(0,0,0) ;
-    */
-    force.pose.position.y = FL_des(1);
-
-     traj_pub.publish(force);
-     std::cout << force.pose.position.x << std::endl;
-     desired_pose_pub.publish(record_pose);
-     desired_force_pub.publish(desired_force);
-     desired_velocity_pub.publish(desired_velocity);
-     feedforward_pub.publish(feedforward);
-
-     ros::spinOnce();
-     loop_rate.sleep();
-    }
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 }
