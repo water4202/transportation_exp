@@ -40,6 +40,9 @@ Eigen::Vector3d w_;
 
 geometry_msgs::PoseStamped desired_pose;
 geometry_msgs::Point controller_force;
+
+geometry_msgs::Point debug_msg;
+
 sensor_msgs::Imu imu_data;
 void payload_imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   imu_data = *msg;
@@ -100,15 +103,17 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "leader_controller");
   ros::NodeHandle nh;
 
-  ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,payload_imu_callback);
+  //ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,payload_imu_callback);
+  ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1",2,payload_imu_callback);
   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
   ros::Subscriber pc2_sub = nh.subscribe("pointpc2",2,pc2_cb);
   ros::Subscriber eta_sub = nh.subscribe("pointvc2",2,eta_cb);
 
   ros::Publisher controller_force_pub = nh.advertise<geometry_msgs::Point>("/controller_force",2);
+  ros::Publisher debug_pub = nh.advertise<geometry_msgs::Point>("/debug_msg",2);
 
   ros::Rate loop_rate(50.0);
-  nh.setParam("/start",false);
+  //nh.setParam("/start",false);
   geometry_msgs::PoseStamped force;
 
   //planning
@@ -170,6 +175,7 @@ int main(int argc, char **argv){
   desired_pose.pose.position.y = 0.0;
   desired_pose.pose.position.z = 1.3;
 
+
   while(ros::ok()){
 
     vir_x = data[tick].pos(0);
@@ -180,6 +186,10 @@ int main(int argc, char **argv){
     ay = data[tick].acc(1);
     jx = data[tick].jerk(0);
     jy = data[tick].jerk(1);
+
+    debug_msg.x = data[tick].pos(0);
+    debug_msg.y = data[tick].vel(0);
+    debug_msg.z = data[tick].acc(0);
 
     theta_r = atan2(data[tick].vel(1),data[tick].vel(0));   //(4)
 
@@ -229,10 +239,14 @@ int main(int argc, char **argv){
 
     tick++;
 
+
     controller_force.x = cmd_(0);   // + nonlinearterm(0);// + vd_dot ;
     controller_force.y = cmd_(1);   // + w_d_dot;
 
     controller_force_pub.publish(controller_force);
+    debug_pub.publish(debug_msg);
+
+    std::cout << "payload_yaw " << payload_yaw << std::endl;
 
     ros::spinOnce();
     loop_rate.sleep();
