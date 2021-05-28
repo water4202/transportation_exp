@@ -103,8 +103,8 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "leader_controller");
   ros::NodeHandle nh;
 
-  //ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,payload_imu_callback);
-  ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1",2,payload_imu_callback);
+  ros::Subscriber imu1_sub = nh.subscribe("/mavros/imu/data",2,payload_imu_callback);
+  //ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1",2,payload_imu_callback);
   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
   ros::Subscriber pc2_sub = nh.subscribe("pointpc2",2,pc2_cb);
   ros::Subscriber eta_sub = nh.subscribe("pointvc2",2,eta_cb);

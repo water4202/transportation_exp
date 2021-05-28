@@ -128,11 +128,16 @@ catkin_package(
 ## Build ##
 ###########
 
+set(INC
+    ../../proj
+)
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${INC}
 )
 
 set(HEADERS_      src/force_est.h src/ukf.h)

@@ -12,6 +12,7 @@
 #include <gazebo_msgs/ModelStates.h>
 #include "geometry_msgs/WrenchStamped.h"
 #include <random>
+#include "proj_conf.h"
 
 #define l 0.25
 #define k 0.02
@@ -48,7 +49,11 @@ int main(int argc, char **argv){
   ros::NodeHandle nh;
 
   ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/imu/data_raw",4,imu_cb);
+#if (MAV_SELECT == LEADER)
   ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV1/pose",4,optitrack_cb);
+#elif (MAV_SELECT == FOLLOWER)
+  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV2/pose",4,optitrack_cb);
+#endif
   ros::Subscriber thrust_sub = nh.subscribe<geometry_msgs::WrenchStamped>("/rotor_all_ft",4,thrust_cb);
 
   ros::Publisher force_pub = nh.advertise<geometry_msgs::Point>("force_estimate",2);
