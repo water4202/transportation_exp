@@ -14,6 +14,7 @@
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 
+#define PAYLOAD_LENGTH 1.58
 #define normal
 #define PI 3.1415926
 
@@ -22,7 +23,7 @@ double mp = 0.5, L = 1.0, g = 9.8, Izz = mp*L*L/12;
 
 Eigen::Vector3d pose, vel;
 Eigen::Vector3d v_p;
-Eigen::Vector3d r_p_c2(-0.5, 0, 0);
+Eigen::Vector3d r_p_c2(-0.5 * PAYLOAD_LENGTH, 0, 0);
 double vir_x, vir_y, theta_r, vx, vy, ax, ay, jx, jy;
 double last_w = 0.0;
 
@@ -122,37 +123,37 @@ int main(int argc, char **argv){
   trajectory_profile p1,p2,p3,p4,p5,p6,p7,p8;
   std::vector<trajectory_profile> data;
 
-    p1.pos << 1,1,0;
+    p1.pos << 0,0,0;
     p1.vel << 0,0,0;
     p1.acc << 0,0,0;
     p1.yaw = 0;
 
-    p2.pos << 3,5,0;
+    p2.pos << 0.25,-0.4,0;
     p2.vel << 0,0,0;
     p2.acc << 0,0,0;
     p2.yaw = 0;
 
-    p3.pos << 12,0,0;
+    p3.pos << 1.2,0,0;
     p3.vel << 0,0,0;
     p3.acc << 0,0,0;
     p3.yaw = 0;
 
-    p4.pos << 3,-5,0;
+    p4.pos << 0.25,0.5,0;
     p4.vel << 0,0,0;
     p4.acc << 0,0,0;
     p4.yaw = 0;
 
-    p5.pos << -3,5,0;
+    p5.pos << -0.4,-0.5,0;
     p5.vel << 0,0,0;
     p5.acc << 0,0,0;
     p5.yaw = 0;
 
-    p6.pos << -12,0,0;
+    p6.pos << -1.2,0,0;
     p6.vel << 0,0,0;
     p6.acc << 0,0,0;
     p6.yaw = 0;
 
-    p7.pos << -3,-5,0;
+    p7.pos << -0.4,0.5,0;
     p7.vel << 0,0,0;
     p7.acc << 0,0,0;
     p7.yaw = 0;
@@ -162,18 +163,18 @@ int main(int argc, char **argv){
     p8.acc << 0,0,0;
     p8.yaw = 0;
 
-  path.push_back(segments(p1,p2,12.0));
-  path.push_back(segments(p2,p3,16.0));
-  path.push_back(segments(p3,p4,16.0));
-  path.push_back(segments(p4,p5,16.0));
-  path.push_back(segments(p5,p6,16.0));
-  path.push_back(segments(p6,p7,16.0));
-  path.push_back(segments(p7,p8,16.0));
+  path.push_back(segments(p1,p2,4.0));
+  path.push_back(segments(p2,p3,4.0));
+  path.push_back(segments(p3,p4,4.0));
+  path.push_back(segments(p4,p5,4.0));
+  path.push_back(segments(p5,p6,4.0));
+  path.push_back(segments(p6,p7,4.0));
+  path.push_back(segments(p7,p8,4.0));
   data = plan.get_profile(path,path.size(),0.02);
 
-  desired_pose.pose.position.x = 0.9;
+  desired_pose.pose.position.x = 0.05;
   desired_pose.pose.position.y = 0.0;
-  desired_pose.pose.position.z = 1.3;
+  desired_pose.pose.position.z = 0.6;
 
 
   while(ros::ok()){
