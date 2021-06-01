@@ -7,6 +7,7 @@
 #include "math.h"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
+#include <geometry_msgs/Pose2D.h>
 
 #define PAYLOAD_LENGTH 1.58
 
@@ -15,6 +16,8 @@ Eigen::Vector3d pc1, pc2, pa, pb;
 sensor_msgs::Imu imu_data;
 Eigen::Matrix3d payload_rotation_b_i; //body to inertial
 Eigen::Matrix3d payload_rotation_i_b; //inertial to body
+geometry_msgs::Pose2D payload_data;
+
 // Eigen::Matrix3d uav_rotation;
 Eigen::Vector3d omega_p;
 void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
@@ -51,6 +54,7 @@ void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
   tf::Quaternion Q(x, y, z, w);
   double payload_roll, payload_pitch, payload_yaw;
   tf::Matrix3x3(Q).getRPY(payload_roll, payload_pitch, payload_yaw);
+  payload_data.theta = payload_yaw;
 
   payload_rotation_b_i << cos(payload_yaw), sin(payload_yaw),   0,
                          -sin(payload_yaw), cos(payload_yaw),   0,
@@ -92,6 +96,7 @@ int main(int argc, char **argv){
   ros::Publisher point2_pub = nh.advertise<geometry_msgs::Point>("pointpc2",2);
   ros::Publisher point_pub = nh.advertise<geometry_msgs::Point>("pointvc2",2);
   ros::Publisher vel_est_pub = nh.advertise<geometry_msgs::Point>("est_vel",2);
+  ros::Publisher payload_yaw_pub = nh.advertise<geometry_msgs::Pose2D>("optitrack_payload_yaw",2);
 
   ros::Rate loop_rate(50);
   forceest forceest1(statesize,measurementsize);
@@ -165,6 +170,7 @@ int main(int argc, char **argv){
     vel_est_pub.publish(point_vel);
     point_pub.publish(point);
     point2_pub.publish(point2);
+    payload_yaw_pub.publish(payload_data);
     loop_rate.sleep();
     ros::spinOnce();
   }

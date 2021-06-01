@@ -13,6 +13,7 @@
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Pose2D.h>
 
 #define PAYLOAD_LENGTH 1.58
 #define normal
@@ -27,7 +28,7 @@ Eigen::Vector3d r_p_c2(-0.5 * PAYLOAD_LENGTH, 0, 0);
 double vir_x, vir_y, theta_r, vx, vy, ax, ay, jx, jy;
 double last_w = 0.0;
 
-double payload_roll, payload_yaw, payload_pitch;
+float payload_yaw;
 Eigen::Vector3d v_w_eta;
 Eigen::Vector3d pc2_est;
 
@@ -48,17 +49,17 @@ sensor_msgs::Imu imu_data;
 void payload_imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   imu_data = *msg;
 
-  double w,x,y,z;
-  x = imu_data.orientation.x;
-  y = imu_data.orientation.y;
-  z = imu_data.orientation.z;
-  w = imu_data.orientation.w;
-  tf::Quaternion Q(x, y, z, w);
-  tf::Matrix3x3(Q).getRPY(payload_roll, payload_pitch, payload_yaw);
+  // double w,x,y,z;
+  // x = imu_data.orientation.x;
+  // y = imu_data.orientation.y;
+  // z = imu_data.orientation.z;
+  // w = imu_data.orientation.w;
+  // tf::Quaternion Q(x, y, z, w);
+  // tf::Matrix3x3(Q).getRPY(payload_roll, payload_pitch, payload_yaw);
 
-  R_pl_B << cos(payload_yaw), sin(payload_yaw),   0,
-           -sin(payload_yaw), cos(payload_yaw),   0,
-                           0,                0,   1;
+  // R_pl_B << cos(payload_yaw), sin(payload_yaw),   0,
+  //          -sin(payload_yaw), cos(payload_yaw),   0,
+  //                          0,                0,   1;
 
   Eigen::Vector3d tmp;
   tmp << imu_data.angular_velocity.x,
@@ -79,6 +80,12 @@ void pc2_cb(const geometry_msgs::Point::ConstPtr& msg){
 
 void eta_cb(const geometry_msgs::Point::ConstPtr& msg){
   v_w_eta << msg->x, msg->y, msg->z;
+}
+
+void optitrack_payload_yaw_callback(const geometry_msgs::Pose2D::ConstPtr& msg){
+  geometry_msgs::Pose2D optitrack_payload_data;
+  optitrack_payload_data = *msg;
+  payload_yaw = optitrack_payload_data.theta;
 }
 
 Eigen::Vector3d nonholonomic_output(double x_r, double y_r, double theta_r, double v_r, double w_r){
@@ -109,6 +116,7 @@ int main(int argc, char **argv){
   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
   ros::Subscriber pc2_sub = nh.subscribe("pointpc2",2,pc2_cb);
   ros::Subscriber eta_sub = nh.subscribe("pointvc2",2,eta_cb);
+  ros::Subscriber yaw_sub = nh.subscribe("optitrack_payload_yaw",2,optitrack_payload_yaw_callback);
 
   ros::Publisher controller_force_pub = nh.advertise<geometry_msgs::Point>("/controller_force",2);
   ros::Publisher debug_pub = nh.advertise<geometry_msgs::Point>("/debug_msg",2);
