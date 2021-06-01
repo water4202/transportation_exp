@@ -8,7 +8,7 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
 
-#define PAYLOAD_LENGTH 1.0
+#define PAYLOAD_LENGTH 1.58
 
 float l = 0.18, L = 0.5, g = 9.81;
 Eigen::Vector3d pc1, pc2, pa, pb;
