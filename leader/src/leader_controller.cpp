@@ -14,6 +14,7 @@
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 
+#define PAYLOAD_LENGTH 1.58
 #define normal
 #define PI 3.1415926
 
@@ -22,7 +23,7 @@ double mp = 0.5, L = 1.0, g = 9.8, Izz = mp*L*L/12;
 
 Eigen::Vector3d pose, vel;
 Eigen::Vector3d v_p;
-Eigen::Vector3d r_p_c2(-0.5, 0, 0);
+Eigen::Vector3d r_p_c2(-0.5 * PAYLOAD_LENGTH, 0, 0);
 double vir_x, vir_y, theta_r, vx, vy, ax, ay, jx, jy;
 double last_w = 0.0;
 
