@@ -62,7 +62,7 @@ Eigen::MatrixXd forceest::  dynamics(Eigen::MatrixXd sigma_state){
     Eigen::Vector3d p_v;
     Eigen::Vector3d p_v1;
     float omega_value;
-    const float m = 1.50;
+    const float m = 1.30;
     v_k << vx, vy, vz;
     thrust_v << 0, 0, thrust;
     gravity << 0, 0, 9.81;

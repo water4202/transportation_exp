@@ -12,6 +12,7 @@
 #include <gazebo_msgs/ModelStates.h>
 #include "geometry_msgs/WrenchStamped.h"
 #include <random>
+#include "proj_conf.h"
 
 #define l 0.25
 #define k 0.02
@@ -48,7 +49,13 @@ int main(int argc, char **argv){
   ros::NodeHandle nh;
 
   ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("/imu/data_raw",4,imu_cb);
-  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",4,optitrack_cb);
+#if (MAV_SELECT == LEADER)
+  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV1/pose",4,optitrack_cb);
+#pragma message("I'm leader!")
+#elif (MAV_SELECT == FOLLOWER)
+  ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/MAV2/pose",4,optitrack_cb);
+#pragma message("I'm follower!")
+#endif
   ros::Subscriber thrust_sub = nh.subscribe<geometry_msgs::WrenchStamped>("/rotor_all_ft",4,thrust_cb);
 
   ros::Publisher force_pub = nh.advertise<geometry_msgs::Point>("force_estimate",2);
@@ -144,7 +151,7 @@ int main(int argc, char **argv){
 
     pose.x = drone_pose.pose.position.x;
 
-    if(drone_imu.angular_velocity.x != 0 && drone_pose.pose.position.x != 0 && drone_vel.twist.linear.x != 0){   
+    if(drone_imu.angular_velocity.x != 0 && drone_pose.pose.position.x != 0 && drone_vel.twist.linear.x != 0){
 
       //F1 = f3(2);//(6.13176e-06*(pwm3*pwm3) -0.0181164*pwm3 + 15.9815); //drone
       //F2 = f1(2);//(6.13176e-06*(pwm1*pwm1) -0.0181164*pwm1 + 15.9815); //left_right:265.7775
@@ -208,13 +215,15 @@ int main(int argc, char **argv){
       euler_ref.y = pitch_ref*180/3.1415926;       //pitch_ref*180/3.1415926
       euler_ref.z = yaw_ref*180/3.1415926;         //yaw_ref*180/3.1415926
 
-      force.x = forceest1.x[F_x];
-      force.y = forceest1.x[F_y];
+      force.x = forceest1.x[F_x] + 0.3; // bias
+      force.y = forceest1.x[F_y] + 0.3;
       force.z = forceest1.x[F_z];
       torque.z = forceest1.x[tau_z];
 
       force_pub.publish(force);
+      printf("UKF estimated force  x: %f  y: %f  z: %f\n", force.x, force.y, force.z);
     }
+
 
     loop_rate.sleep();
     ros::spinOnce();

@@ -1,18 +1,24 @@
 ﻿#include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
 #include "forceest.h"
-#include "geometry_msgs/PoseStamped.h"
+#include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_datatypes.h>
 #include "geometry_msgs/Point.h"
 #include "math.h"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
+#include <geometry_msgs/Pose2D.h>
+
+#define PAYLOAD_LENGTH 1.58
 
 float l = 0.18, L = 0.5, g = 9.81;
 Eigen::Vector3d pc1, pc2, pa, pb;
 sensor_msgs::Imu imu_data;
-Eigen::Matrix3d payload_rotation;
-Eigen::Matrix3d uav_rotation;
+Eigen::Matrix3d payload_rotation_b_i; //body to inertial
+Eigen::Matrix3d payload_rotation_i_b; //inertial to body
+geometry_msgs::Pose2D payload_data;
+
+// Eigen::Matrix3d uav_rotation;
 Eigen::Vector3d omega_p;
 void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
   Eigen::Vector3d data;
@@ -21,45 +27,62 @@ void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
   data << imu_data.linear_acceleration.x, imu_data.linear_acceleration.y, imu_data.linear_acceleration.z;
   wdata << imu_data.angular_velocity.x, imu_data.angular_velocity.y, imu_data.angular_velocity.z;
 
-  float w,x,y,z;
-  x = imu_data.orientation.x;
-  y = imu_data.orientation.y;
-  z = imu_data.orientation.z;
-  w = imu_data.orientation.w;
+  // float w,x,y,z;
+  // x = imu_data.orientation.x;
+  // y = imu_data.orientation.y;
+  // z = imu_data.orientation.z;
+  // w = imu_data.orientation.w;
 
-  payload_rotation << w*w+x*x-y*y-z*z,     2*x*y-2*w*z,     2*x*z+2*w*y,
-                          2*x*y+2*w*z, w*w-x*x+y*y-z*z,     2*y*z-2*w*x,
-                          2*x*z-2*w*y,     2*y*z+2*w*x, w*w-x*x-y*y+z*z;
+  // payload_rotation << w*w+x*x-y*y-z*z,     2*x*y-2*w*z,     2*x*z+2*w*y,
+  //                         2*x*y+2*w*z, w*w-x*x+y*y-z*z,     2*y*z-2*w*x,
+  //                         2*x*z-2*w*y,     2*y*z+2*w*x, w*w-x*x-y*y+z*z;
 
-  pa = payload_rotation * data - Eigen::Vector3d(0,0,g);
-  omega_p = payload_rotation * wdata;
+  pa = payload_rotation_b_i * data - Eigen::Vector3d(0,0,g);
+  omega_p = payload_rotation_b_i * wdata;
 }
 
-Eigen::Vector3d PL;
+// Eigen::Vector3d PL;
 void optitrack_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
+  geometry_msgs::PoseStamped payload_optitrack_data;
+  payload_optitrack_data = *msg;
 
-  PL << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+  double w,x,y,z;
+  x = payload_optitrack_data.pose.orientation.x;
+  y = payload_optitrack_data.pose.orientation.y;
+  z = payload_optitrack_data.pose.orientation.z;
+  w = payload_optitrack_data.pose.orientation.w;
+  tf::Quaternion Q(x, y, z, w);
+  double payload_roll, payload_pitch, payload_yaw;
+  tf::Matrix3x3(Q).getRPY(payload_roll, payload_pitch, payload_yaw);
+  payload_data.theta = payload_yaw;
 
-  float w,x,y,z;
-  x = msg->pose.orientation.x;
-  y = msg->pose.orientation.y;
-  z = msg->pose.orientation.z;
-  w = msg->pose.orientation.w;
+  payload_rotation_b_i << cos(payload_yaw), sin(payload_yaw),   0,
+                         -sin(payload_yaw), cos(payload_yaw),   0,
+                                         0,                0,   1;
+  payload_rotation_i_b = payload_rotation_b_i.transpose();
 
-  uav_rotation << w*w+x*x-y*y-z*z,     2*x*y-2*w*z,     2*x*z+2*w*y,
-                      2*x*y+2*w*z, w*w-x*x+y*y-z*z,     2*y*z-2*w*x,
-                      2*x*z-2*w*y,     2*y*z+2*w*x, w*w-x*x-y*y+z*z;
+  pc1 << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+
+  // float w,x,y,z;
+  // x = msg->pose.orientation.x;
+  // y = msg->pose.orientation.y;
+  // z = msg->pose.orientation.z;
+  // w = msg->pose.orientation.w;
+  //
+  // uav_rotation << w*w+x*x-y*y-z*z,     2*x*y-2*w*z,     2*x*z+2*w*y,
+  //                     2*x*y+2*w*z, w*w-x*x+y*y-z*z,     2*y*z-2*w*x,
+  //                     2*x*z-2*w*y,     2*y*z+2*w*x, w*w-x*x-y*y+z*z;
 }
 
 void force_cb(const geometry_msgs::Point::ConstPtr& msg){
   Eigen::Vector3d f;
   f << msg->x, msg->y, msg->z;
 
-  pb = PL - uav_rotation * Eigen::Vector3d(0,0,0.05);// offset x from uav to connector
-  pc1 = pb + (f/f.norm())*l;
+  // pb = PL - uav_rotation * Eigen::Vector3d(0,0,0.05);// offset x from uav to connector
+  // pc1 = pb + (f/f.norm())*l;
 
   //find pc2
-  pc2 =  pc1 +  payload_rotation * Eigen::Vector3d(-1.0,0,0);
+  pc2 =  pc1 +  payload_rotation_b_i * Eigen::Vector3d(-PAYLOAD_LENGTH,0,0);
 }
 
 int main(int argc, char **argv){
@@ -67,12 +90,13 @@ int main(int argc, char **argv){
   ros::NodeHandle nh;
 
   ros::Subscriber imu1_sub = nh.subscribe<sensor_msgs::Imu>("/mavros/imu/data",2,imu1_cb);  //payload imu
-  ros::Subscriber odometry_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/RigidBody7/pose",2,optitrack_cb);
-  ros::Subscriber force_sub = nh.subscribe<geometry_msgs::Point>("/leader_ukf/force_estimate",2,force_cb);
+  ros::Subscriber odometry_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vrpn_client_node/payload/pose",2,optitrack_cb);
+  ros::Subscriber force_sub = nh.subscribe<geometry_msgs::Point>("/force_estimate",2,force_cb);
 
   ros::Publisher point2_pub = nh.advertise<geometry_msgs::Point>("pointpc2",2);
   ros::Publisher point_pub = nh.advertise<geometry_msgs::Point>("pointvc2",2);
   ros::Publisher vel_est_pub = nh.advertise<geometry_msgs::Point>("est_vel",2);
+  ros::Publisher payload_yaw_pub = nh.advertise<geometry_msgs::Pose2D>("optitrack_payload_yaw",2);
 
   ros::Rate loop_rate(50);
   forceest forceest1(statesize,measurementsize);
@@ -135,7 +159,7 @@ int main(int argc, char **argv){
     point_vel.y = forceest1.x[vc1_y];
     point_vel.z = forceest1.x[vc1_z];
 
-    Eigen::Vector3d vc1_B = payload_rotation.transpose()*vc1_I;
+    Eigen::Vector3d vc1_B = payload_rotation_i_b * vc1_I;
     point.x = vc1_B(0);    //linear velocity in payload frame
     point.z = omega_p(2);
 
@@ -146,6 +170,7 @@ int main(int argc, char **argv){
     vel_est_pub.publish(point_vel);
     point_pub.publish(point);
     point2_pub.publish(point2);
+    payload_yaw_pub.publish(payload_data);
     loop_rate.sleep();
     ros::spinOnce();
   }

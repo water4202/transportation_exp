@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/liu/ROS/catkin_ws/src/transportation_exp/qp_trajectory/devel/setup.sh

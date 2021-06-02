@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(2ndUKF)
+project(second_ukf)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -125,9 +125,9 @@ include_directories(
 set(HEADERS_  src/forceest.h src/ukf.h)
 set(SOURCES_  src/forceest.cpp src/ukf.cpp)
 
-add_executable(2ndUKF src/pose_estimate.cpp ${HEADERS_} ${SOURCES_})
+add_executable(second_ukf src/pose_estimate.cpp ${HEADERS_} ${SOURCES_})
 
-target_link_libraries(2ndUKF
+target_link_libraries(second_ukf
   ${catkin_LIBRARIES}
 )
 ## Declare a C++ library
